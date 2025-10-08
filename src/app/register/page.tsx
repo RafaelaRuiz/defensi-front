@@ -6,7 +6,7 @@ import Button from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function Login() {
+export default function Register() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
@@ -15,25 +15,22 @@ export default function Login() {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRequestOtp = async () => {
-    if (!email || !password) {
-      alert("Por favor completa email y contraseña");
-      return;
-    }
+  const handleRegister = async () => {
+    if (!email || !password) return alert("Completa todos los campos");
     setIsLoading(true);
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
-      const res = await fetch(`${api}/auth/login`, {
+      const res = await fetch(`${api}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Error");
+      if (!res.ok) throw new Error(json.message || "Error registrando");
       setOtpSent(true);
-      alert("Se envió un código OTP a tu correo");
+      alert("Registro iniciado. Revisa tu correo para el código OTP");
     } catch (err: any) {
-      alert(err.message || "Error al solicitar OTP");
+      alert(err.message || "Error al registrar");
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +48,6 @@ export default function Login() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Error verificando OTP");
-      // backend returns { token, user }
       login(json.user, json.token);
       router.push("/dashboard");
     } catch (err: any) {
@@ -73,10 +69,10 @@ export default function Login() {
           />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              Accede a tu cuenta
+              Crear cuenta
             </h1>
             <p className="text-gray-600 text-sm">
-              Ingresa con tu email y contraseña. Recibirás un OTP para
+              Regístrate con email y contraseña. Recibirás un OTP para
               confirmar.
             </p>
           </div>
@@ -115,8 +111,8 @@ export default function Login() {
 
             {!otpSent ? (
               <Button
-                onClick={handleRequestOtp}
-                text={isLoading ? "Enviando..." : "Enviar código"}
+                onClick={handleRegister}
+                text={isLoading ? "Registrando..." : "Crear cuenta"}
                 className="w-full"
               />
             ) : (
@@ -144,10 +140,10 @@ export default function Login() {
 
           <div className="flex flex-col items-center space-y-2 w-full">
             <a
-              href="/register"
+              href="/login"
               className="text-blue-500 hover:text-blue-700 text-sm"
             >
-              Crear cuenta
+              Ir a inicio de sesión
             </a>
           </div>
         </div>
