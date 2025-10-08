@@ -29,6 +29,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
     nit: "",
     companyName: "",
     websiteUrl: "",
+    generatePdf: false,
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -209,6 +210,17 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
 
           if (result.generatedPolicy?.suggested) {
             responseContent += `📝 **He generado una política personalizada para tu empresa.**\n\n`;
+
+            if (
+              result.generatedPolicy.pdfGenerated &&
+              result.generatedPolicy.downloadUrl
+            ) {
+              responseContent += `📄 **PDF generado exitosamente**\n`;
+              responseContent += `🔗 [Descargar Política en PDF](${
+                process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"
+              }${result.generatedPolicy.downloadUrl})\n\n`;
+            }
+
             responseContent += `**Pasos de implementación:**\n`;
             result.generatedPolicy.implementationSteps?.forEach(
               (step: string, index: number) => {
@@ -253,7 +265,12 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
-      setLaw1581Data({ nit: "", companyName: "", websiteUrl: "" });
+      setLaw1581Data({
+        nit: "",
+        companyName: "",
+        websiteUrl: "",
+        generatePdf: false,
+      });
     }
   };
 
@@ -537,6 +554,26 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                     placeholder="https://www.miempresa.com"
                   />
+                </div>
+                <div className="flex items-center space-x-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="generatePdf"
+                    checked={law1581Data.generatePdf}
+                    onChange={(e) =>
+                      setLaw1581Data((prev) => ({
+                        ...prev,
+                        generatePdf: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="generatePdf"
+                    className="text-sm text-gray-700"
+                  >
+                    📄 Generar política en formato PDF
+                  </label>
                 </div>
                 <div className="flex space-x-2">
                   <button
