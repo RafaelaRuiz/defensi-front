@@ -499,13 +499,13 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
 
           {/* Ley 1581 Form */}
           {showLaw1581Form && (
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 p-4 rounded-lg text-black!">
               <h4 className="font-medium text-gray-900 mb-3">
                 📋 Información para análisis Ley 1581
               </h4>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-800 mb-1">
                     NIT de la empresa *
                   </label>
                   <input
@@ -517,12 +517,12 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                         nit: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm black"
                     placeholder="123456789-1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-800 mb-1">
                     Nombre de la empresa *
                   </label>
                   <input
@@ -534,12 +534,12 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                         companyName: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-black"
                     placeholder="Mi Empresa S.A.S."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-800 mb-1">
                     Página web (opcional)
                   </label>
                   <input
@@ -551,7 +551,7 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                         websiteUrl: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-black"
                     placeholder="https://www.miempresa.com"
                   />
                 </div>
@@ -570,7 +570,7 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                   />
                   <label
                     htmlFor="generatePdf"
-                    className="text-sm text-gray-700"
+                    className="text-sm text-gray-800"
                   >
                     📄 Generar política en formato PDF
                   </label>
