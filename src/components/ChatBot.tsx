@@ -274,13 +274,18 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
     }
   };
 
-  const sendMessage = async (messageText: string = inputMessage) => {
-    if (!messageText.trim() || !user?.id) return;
+  const sendMessage = async (messageText?: string) => {
+    const text = (
+      typeof messageText === "string" ? messageText : inputMessage || ""
+    )
+      .toString()
+      .trim();
+    if (!text || !user?.id) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: messageText,
+      content: text,
       timestamp: new Date(),
     };
 
@@ -299,7 +304,7 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: messageText,
+          message: text,
           userId: user.id,
           context: selectedOption || "general",
         }),
@@ -440,14 +445,17 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                       <p className="text-sm font-medium text-gray-700">
                         🎯 Acciones sugeridas:
                       </p>
-                      {message.suggestedActions.map((action, index) => (
-                        <div
-                          key={index}
-                          className="text-sm text-gray-600 bg-blue-50 p-2 rounded"
-                        >
-                          • {action}
-                        </div>
-                      ))}
+                      <div className="flex flex-wrap gap-2">
+                        {message.suggestedActions.map((action, index) => (
+                          <button
+                            key={index}
+                            onClick={() => sendMessage(action)}
+                            className="text-xs md:text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded transition-colors"
+                          >
+                            {action}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -478,7 +486,7 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
           ))}
 
           {/* Quick Options */}
-          {messages.length <= 1 && !isLoading && (
+          {!isLoading && !showLaw1581Form && (
             <div className="grid grid-cols-2 gap-2 mt-4">
               {quickOptions.map((option) => (
                 <button
