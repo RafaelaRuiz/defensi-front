@@ -88,10 +88,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
 
 Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
 
-🔍 **Análisis general de cumplimiento**
+🔍 **Análisis específico Ley 1581 de Colombia**
+📊 **Análisis general de cumplimiento**
 📋 **Revisión de documentos de seguridad**
 🛡️ **Evaluación de políticas ISO 27001**
-🇨🇴 **Análisis específico Ley 1581 de Colombia**
+
 
 ¿En qué te puedo ayudar hoy?`,
       timestamp: new Date(),
@@ -102,19 +103,19 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
 
   const quickOptions = [
     {
+      id: "law1581",
+      label: "🔍 Ley 1581",
+      description: "Análisis protección datos Colombia",
+    },
+    {
       id: "general",
-      label: "📊 Análisis General",
+      label: "📊 Análisis de Seguridad",
       description: "Revisar mi estado de cumplimiento actual",
     },
     {
       id: "iso27001",
       label: "🛡️ ISO 27001",
       description: "Evaluación de cumplimiento ISO 27001",
-    },
-    {
-      id: "law1581",
-      label: "🇨🇴 Ley 1581",
-      description: "Análisis protección datos Colombia",
     },
     {
       id: "documents",
@@ -124,37 +125,26 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
   ];
 
   const handleQuickOption = async (optionId: string) => {
-    setSelectedOption(optionId);
-
-    if (optionId === "law1581") {
-      setShowLaw1581Form(true);
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: "user",
-        content:
-          "Quiero hacer un análisis de cumplimiento con la Ley 1581 de Colombia",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, userMessage]);
+    // Solo permitir la opción de Ley 1581
+    if (optionId !== "law1581") {
       return;
     }
 
-    const optionMessages: { [key: string]: string } = {
-      general:
-        "Dame un análisis general de mi estado de cumplimiento normativo",
-      iso27001: "Revisa mi cumplimiento con la norma ISO 27001",
-      documents: "Analiza mis documentos de seguridad actuales",
+    setSelectedOption(optionId);
+    setShowLaw1581Form(true);
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content:
+        "Quiero hacer un análisis de cumplimiento con la Ley 1581 de Colombia",
+      timestamp: new Date(),
     };
-
-    const message = optionMessages[optionId];
-    if (message) {
-      await sendMessage(message);
-    }
+    setMessages((prev) => [...prev, userMessage]);
   };
 
   const handleLaw1581Analysis = async () => {
-    if (!law1581Data.nit || !law1581Data.companyName) {
-      alert("Por favor completa al menos el NIT y nombre de la empresa");
+    if (!law1581Data.websiteUrl) {
+      alert("Por favor ingresa la URL del sitio web");
       return;
     }
 
@@ -180,7 +170,7 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
       if (response.ok) {
         const result = await response.json();
 
-        let responseContent = `**📋 Análisis Ley 1581 - ${law1581Data.companyName}**\n\n`;
+        let responseContent = `**📋 Análisis Ley 1581 - ${law1581Data.websiteUrl}**\n\n`;
 
         if (result.complianceAnalysis?.hasPrivacyPolicy) {
           responseContent += `✅ **Política encontrada en el sitio web**\n`;
@@ -211,23 +201,25 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
           if (result.generatedPolicy?.suggested) {
             responseContent += `📝 **He generado una política personalizada para tu empresa.**\n\n`;
 
-            if (
-              result.generatedPolicy.pdfGenerated &&
-              result.generatedPolicy.downloadUrl
-            ) {
-              responseContent += `📄 **PDF generado exitosamente**\n`;
-              responseContent += `🔗 [Descargar Política en PDF](${
-                process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"
-              }${result.generatedPolicy.downloadUrl})\n\n`;
-            }
-
             responseContent += `**Pasos de implementación:**\n`;
             result.generatedPolicy.implementationSteps?.forEach(
               (step: string, index: number) => {
                 responseContent += `${index + 1}. ${step}\n`;
               }
             );
+            responseContent += "\n";
           }
+        }
+
+        // Mostrar enlace de descarga del PDF si fue generado
+        if (
+          result.generatedPolicy?.pdfGenerated &&
+          result.generatedPolicy.downloadUrl
+        ) {
+          responseContent += `\n📄 **Informe PDF generado**\n`;
+          responseContent += `[Descargar Informe en PDF](${
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"
+          }${result.generatedPolicy.downloadUrl})\n\n`;
         }
 
         if (result.complianceAnalysis?.recommendations?.length > 0) {
@@ -292,6 +284,22 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
     setIsLoading(true);
+
+    // Si el mensaje viene de una acción sugerida, mostrar mensaje de actualización de plan
+    if (messageText && typeof messageText === "string") {
+      setTimeout(() => {
+        const upgradeMessage: Message = {
+          id: Date.now().toString(),
+          role: "bot",
+          content:
+            "Para acceder a esta función, actualiza tu plan. [Click aquí](https://www.itechsas.com/blog/planes-defensi/)",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, upgradeMessage]);
+        setIsLoading(false);
+      }, 500);
+      return;
+    }
 
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
@@ -375,6 +383,30 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
     }
   };
 
+  const renderMessageContent = (content: string) => {
+    // Convertir enlaces Markdown [texto](url) a enlaces HTML
+    const parts = content.split(/(\[.*?\]\(.*?\))/g);
+
+    return parts.map((part, index) => {
+      const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+      if (linkMatch) {
+        const [, text, url] = linkMatch;
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            {text}
+          </a>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -431,7 +463,9 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                     : "bg-gray-100 text-gray-900"
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                <div className="whitespace-pre-wrap">
+                  {renderMessageContent(message.content)}
+                </div>
 
                 {message.complianceLevel && (
                   <div className="mt-2">
@@ -492,9 +526,20 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                 <button
                   key={option.id}
                   onClick={() => handleQuickOption(option.id)}
-                  className="p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={option.id !== "law1581"}
+                  className={`p-3 text-left border rounded-lg transition-colors ${
+                    option.id === "law1581"
+                      ? "border-blue-300 hover:bg-blue-50/30 cursor-pointer"
+                      : "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+                  }`}
                 >
-                  <div className="font-medium text-sm text-gray-900">
+                  <div
+                    className={`font-medium text-sm ${
+                      option.id === "law1581"
+                        ? "text-gray-900"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {option.label}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
@@ -514,7 +559,24 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-800 mb-1">
-                    NIT de la empresa *
+                    Página web *
+                  </label>
+                  <input
+                    type="url"
+                    value={law1581Data.websiteUrl}
+                    onChange={(e) =>
+                      setLaw1581Data((prev) => ({
+                        ...prev,
+                        websiteUrl: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-black"
+                    placeholder="https://www.miempresa.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-1">
+                    NIT de la empresa (opcional)
                   </label>
                   <input
                     type="text"
@@ -531,7 +593,7 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-800 mb-1">
-                    Nombre de la empresa *
+                    Nombre de la empresa (opcional)
                   </label>
                   <input
                     type="text"
@@ -544,23 +606,6 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-black"
                     placeholder="Mi Empresa S.A.S."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-800 mb-1">
-                    Página web (opcional)
-                  </label>
-                  <input
-                    type="url"
-                    value={law1581Data.websiteUrl}
-                    onChange={(e) =>
-                      setLaw1581Data((prev) => ({
-                        ...prev,
-                        websiteUrl: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-black"
-                    placeholder="https://www.miempresa.com"
                   />
                 </div>
                 <div className="flex items-center space-x-2 mb-3">
@@ -580,13 +625,13 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
                     htmlFor="generatePdf"
                     className="text-sm text-gray-800"
                   >
-                    📄 Generar política en formato PDF
+                    📄 Generar informe PDF
                   </label>
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={handleLaw1581Analysis}
-                    disabled={!law1581Data.nit || !law1581Data.companyName}
+                    disabled={!law1581Data.websiteUrl}
                     className="px-4 py-2 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Analizar Cumplimiento
@@ -625,7 +670,7 @@ Soy tu asistente de cumplimiento normativo. Puedo ayudarte con:
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Escribe tu consulta sobre cumplimiento normativo..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               disabled={isLoading}
             />
             <button

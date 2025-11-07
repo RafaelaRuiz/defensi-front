@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Button from "@/components/ui/button";
+import Alert from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -14,13 +15,17 @@ export default function Login() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleRequestOtp = async () => {
     if (!email || !password) {
-      alert("Por favor completa email y contraseña");
+      setError("Por favor completa email y contraseña");
       return;
     }
     setIsLoading(true);
+    setError("");
+    setSuccess("");
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
       const res = await fetch(`${api}/auth/login`, {
@@ -29,19 +34,24 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Error");
+      if (!res.ok) throw new Error(json.message || "Credenciales inválidas");
       setOtpSent(true);
-      alert("Se envió un código OTP a tu correo");
+      setSuccess("Se envió un código OTP a tu correo");
     } catch (err: any) {
-      alert(err.message || "Error al solicitar OTP");
+      setError(err.message || "Error al solicitar OTP");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    if (!email || !otp) return alert("Ingresa el código OTP");
+    if (!email || !otp) {
+      setError("Ingresa el código OTP");
+      return;
+    }
     setIsLoading(true);
+    setError("");
+    setSuccess("");
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "";
       const res = await fetch(`${api}/auth/verify-otp`, {
@@ -50,12 +60,12 @@ export default function Login() {
         body: JSON.stringify({ email, code: otp }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Error verificando OTP");
+      if (!res.ok) throw new Error(json.message || "Código OTP inválido");
       // backend returns { token, user }
       login(json.user, json.token);
       router.push("/dashboard");
     } catch (err: any) {
-      alert(err.message || "Error verificando OTP");
+      setError(err.message || "Error verificando OTP");
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +95,21 @@ export default function Login() {
             className="w-full space-y-4"
             onSubmit={(e) => e.preventDefault()}
           >
+            {error && (
+              <Alert
+                message={error}
+                type="error"
+                onClose={() => setError("")}
+              />
+            )}
+            {success && (
+              <Alert
+                message={success}
+                type="success"
+                onClose={() => setSuccess("")}
+              />
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email

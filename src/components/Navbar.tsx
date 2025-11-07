@@ -29,9 +29,7 @@ const Navbar = () => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: '🏠' },
     { id: 'security', label: 'ScanPhish', path: 'https://defensi-vsphishing.vercel.app/phishing/urlDirecta', icon: '🛡️' },
-    { id: 'reports', label: 'Reportes', path: '/reports', icon: '📊' },
-    { id: 'settings', label: 'Configuración', path: '/settings', icon: '⚙️' },
-    { id: 'users', label: 'Usuarios', path: '/users', icon: '👥' },
+    { id: 'prodati', label: 'Prodati', path: 'http://40.117.196.165', icon: '📊' },
   ];
 
   return (
