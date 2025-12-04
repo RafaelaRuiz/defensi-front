@@ -4,8 +4,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface User {
   id: string;
-  username: string;
+  username?: string;
   email?: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -51,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   return (

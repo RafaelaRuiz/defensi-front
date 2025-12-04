@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ChatBot from "@/components/ChatBot";
+import UsernameModal from "@/components/UsernameModal";
 
 interface ChatMessage {
   id: string;
@@ -42,6 +43,7 @@ export default function Dashboard() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -53,6 +55,11 @@ export default function Dashboard() {
     if (isAuthenticated && user?.id) {
       loadChatHistory();
       loadDocuments();
+
+      // Verificar si el usuario no tiene username
+      if (!user.username || user.username.trim() === "") {
+        setShowUsernameModal(true);
+      }
     }
   }, [isAuthenticated, user?.id]);
 
@@ -186,6 +193,65 @@ export default function Dashboard() {
       // Reset input
       event.target.value = "";
     }
+  };
+
+  const handleSaveUsername = async (username: string) => {
+    if (!user?.id) return;
+
+    const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error(
+        "No se encontró el token de autenticación. Por favor, inicia sesión nuevamente."
+      );
+    }
+
+    console.log("Token being sent:", token); // Debug
+    console.log("Token length:", token?.length); // Debug
+    console.log("Token starts with:", token?.substring(0, 20)); // Debug
+    console.log("Username to save:", username); // Debug
+    console.log("User ID:", user.id); // Debug
+    console.log("Full headers:", {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }); // Debug
+
+    const response = await fetch(`${api}/users/set-username`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: username,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response:", errorText); // Debug
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { message: errorText };
+      }
+      throw new Error(error.message || "Error al guardar el nombre de usuario");
+    }
+
+    const updatedUser = await response.json();
+
+    // Actualizar el usuario en el contexto y localStorage
+    const userData = {
+      id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      role: updatedUser.role,
+    };
+
+    localStorage.setItem("user", JSON.stringify(userData));
+    window.location.reload(); // Recargar para actualizar el contexto
   };
 
   const deleteDocument = async (docId: string) => {
@@ -568,6 +634,14 @@ export default function Dashboard() {
           />
         </svg>
       </button>
+
+      {/* Username Modal */}
+      <UsernameModal
+        isOpen={showUsernameModal}
+        onClose={() => setShowUsernameModal(false)}
+        onSave={handleSaveUsername}
+        suggestedUsername={user?.email?.split("@")[0] || "Usuario"}
+      />
 
       {/* ChatBot Component */}
       <ChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
