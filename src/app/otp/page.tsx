@@ -10,18 +10,51 @@ import { useAuth } from "@/contexts/AuthContext";
 function OtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const email = searchParams.get("email") || "";
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [shouldRender, setShouldRender] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
+    // Esperar a que termine de cargar la autenticación
+    if (authLoading) return;
+
+    // Redirigir a dashboard si ya está autenticado
+    if (isAuthenticated) {
+      router.push("/dashboard");
+      return;
+    }
+
+    // Redirigir a inicio si no hay email
+    if (!email) {
+      router.push("/");
+      return;
+    }
+
+    // Si llegamos aquí, es válido mostrar la página
+    setShouldRender(true);
+
     // Focus first input on mount
-    inputRefs.current[0]?.focus();
-  }, []);
+    setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 100);
+  }, [isAuthenticated, authLoading, email, router]);
+
+  // Mostrar loading mientras valida
+  if (authLoading || !shouldRender) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleChange = (index: number, value: string) => {
     // Only allow digits
